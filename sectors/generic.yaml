@@ -1,0 +1,4 @@
+tasks:
+  text_classification:
+    pipeline: classification
+    model: simple_classifier

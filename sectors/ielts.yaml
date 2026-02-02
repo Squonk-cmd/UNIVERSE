@@ -1,0 +1,4 @@
+tasks:
+  writing_score:
+    pipeline: scoring
+    model: essay_scorer
