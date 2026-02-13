@@ -1,4 +1,4 @@
 tasks:
-  writing_score:
-    pipeline: scoring
-    model: essay_scorer
+  writing_eval:
+    pipeline: ielts_pipeline # We need to register this in pipelines/__init__.py
+    model: ielts_evaluator
