@@ -6,7 +6,7 @@ from google.generativeai.types import HarmCategory, HarmBlockThreshold
 
 class IELTSEvaluator:
     def __init__(self):
-        api_key = os.getenv("GEMINI_API_KEY", "AIzaSyDXfw9eGeYkT8dE5oiXaRF7Fy7TAFGnzKE")
+        api_key = os.getenv("GEMINI_API_KEY")
         genai.configure(api_key=api_key)
         
         system_instruction = (
