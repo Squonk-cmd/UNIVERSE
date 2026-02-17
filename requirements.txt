@@ -1,7 +1,5 @@
 fastapi
 uvicorn
-pyyaml
 pydantic
-scikit-learn
-transformers
-torch
+google-generativeai
+python-multipart
