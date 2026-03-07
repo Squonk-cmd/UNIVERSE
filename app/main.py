@@ -23,6 +23,13 @@ class FullTestRequest(BaseModel):
     task1_image: Optional[str] = None
     task2_text: str
 
+@app.get("/")
+async def root():
+    return {"status": "ok"}
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
 @app.post("/analyze")
 async def analyze_full_test(request: FullTestRequest):
     try:
