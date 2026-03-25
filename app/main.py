@@ -54,7 +54,7 @@ async def analyze_full_test(request: FullTestRequest):
             task1_text=request.task1_text,
             task1_img_b64=request.task1_image,
             task1_word_count=t1_count,   # New parameter
-            task2_text=request.task2_text
+            task2_text=request.task2_text,
             task2_word_count=t2_count    # New parameter
         )
         
