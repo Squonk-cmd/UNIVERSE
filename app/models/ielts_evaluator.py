@@ -10,8 +10,11 @@ class IELTSEvaluator:
         genai.configure(api_key=api_key)
         
         system_instruction = (
-            "You are a senior, supportive IELTS Writing Examiner. Provide a human-centric evaluation. "
-            "Be lenient and favor the higher half-band if the communication is clear. "
+            "You are a senior IELTS Writing Examiner. Your goal is to provide a human-centric, encouraging, yet technically accurate evaluation. "
+            "EVALUATION RIGOR: "
+            "1. Follow official IELTS assessment criteria: Task Response, Coherence & Cohesion, Lexical Resource, and Grammatical Range & Accuracy."
+            "2. WORD COUNT PENALTY: This is non-negotiable. If an essay is significantly under the 250-word limit (e.g., 150 words), you MUST penalize the Task Response score heavily, as the candidate cannot adequately develop the ideas."
+            "3. Leniency: If the word count is met and communication is clear/effective, favor the higher half-band in your final scoring."
             "Return ONLY a JSON object."
         )
 
@@ -56,33 +59,48 @@ class IELTSEvaluator:
 
     def _build_prompt(self, t1, t2):
         return f"""
-        Analyze these two IELTS tasks based on official criteria.
+        Analyze these two IELTS tasks based on official criteria. 
+
+        SCORING RULES (CRITICAL):
+        1. WORD COUNT PENALTY: You must strictly penalize "Task Achievement" (Task 1) and "Task Response" (Task 2) if word counts are below 150 and 250 respectively. 
+           - If Task 2 is ~150 words (100 words short), the Task Response score MUST NOT exceed 4.0 or 4.5, even if the grammar is perfect.
+        2. LENIENCY: Only favor the higher half-band if the minimum word count is met and communication is clear.
+
+        LANGUAGE REQUIREMENTS:
+        - "explanation": MUST be written in Bengali (বাংলা). Explain the grammatical rule or logic behind the correction.
+        - "suggestions": MUST be written in Bengali (বাংলা). Provide actionable advice for improvement.
+        - "detailed_feedback": Should remain in English to maintain the professional tone of a Senior Examiner.
+
         TASK 1 TEXT: {t1}
         TASK 2 TEXT: {t2}
 
-        Return a JSON object with keys "task1" and "task2". 
-        Inside the "errors" list for each task, you MUST provide objects with this exact structure:
-        {{
-            "original": "the exact text from the student's essay",
-            "correction": "the improved/corrected version",
-            "explanation": "why it was wrong and the grammatical rule involved"
-        }}
-
-        JSON Schema:
+        Return ONLY a JSON object with this exact structure:
         {{
           "task1": {{
             "band_score": float,
             "criteria_scores": {{ "task_achievement": float, "coherence_cohesion": float, "lexical_resource": float, "grammatical_range": float }},
             "detailed_feedback": "string",
-            "errors": [ {{ "original": "...", "correction": "...", "explanation": "..." }} ],
-            "suggestions": ["string"]
+            "errors": [ 
+              {{ 
+                "original": "exact text from essay", 
+                "correction": "improved version", 
+                "explanation": "বাংলায় ব্যাখ্যা" 
+              }} 
+            ],
+            "suggestions": ["বাংলায় পরামর্শ ১", "বাংলায় পরামর্শ ২"]
           }},
           "task2": {{
             "band_score": float,
             "criteria_scores": {{ "task_response": float, "coherence_cohesion": float, "lexical_resource": float, "grammatical_range": float }},
             "detailed_feedback": "string",
-            "errors": [ {{ "original": "...", "correction": "...", "explanation": "..." }} ],
-            "suggestions": ["string"]
+            "errors": [ 
+              {{ 
+                "original": "exact text from essay", 
+                "correction": "improved version", 
+                "explanation": "বাংলায় ব্যাখ্যা" 
+              }} 
+            ],
+            "suggestions": ["বাংলায় পরামর্শ ১", "বাংলায় পরামর্শ ২"]
           }}
         }}
         """
