@@ -18,6 +18,19 @@ app.add_middleware(
 
 evaluator = IELTSEvaluator()
 
+# --- UTILITY FUNCTION FOR WORD COUNT ---
+def get_clean_word_count(text: str) -> int:
+    """
+    Counts only words, ignoring punctuation, special characters, and extra spaces.
+    Example: "Hello, world!" -> ['Hello', 'world'] -> Count: 2
+    """
+    if not text:
+        return 0
+    # This regex finds all alphanumeric sequences (words/numbers) 
+    # and ignores punctuation like commas, periods, etc.
+    words = re.findall(r'\b\w+\b', text)
+    return len(words)
+
 class FullTestRequest(BaseModel):
     task1_text: str
     task1_image: Optional[str] = None
@@ -33,10 +46,16 @@ async def health_check():
 @app.post("/analyze")
 async def analyze_full_test(request: FullTestRequest):
     try:
+        # 1. Calculate word counts manually
+        t1_count = get_clean_word_count(request.task1_text)
+        t2_count = get_clean_word_count(request.task2_text)
+        
         result = evaluator.evaluate_with_retry(
             task1_text=request.task1_text,
             task1_img_b64=request.task1_image,
+            task1_word_count=t1_count,   # New parameter
             task2_text=request.task2_text
+            task2_word_count=t2_count    # New parameter
         )
         
         if "error" in result:
