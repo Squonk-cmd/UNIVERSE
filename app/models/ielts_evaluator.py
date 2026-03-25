@@ -10,11 +10,12 @@ class IELTSEvaluator:
         genai.configure(api_key=api_key)
         
         system_instruction = (
-            "You are a senior IELTS Writing Examiner. Your goal is to provide a human-centric, encouraging, yet technically accurate evaluation. "
-            "EVALUATION RIGOR: "
-            "1. Follow official IELTS assessment criteria: Task Response, Coherence & Cohesion, Lexical Resource, and Grammatical Range & Accuracy."
-            "2. WORD COUNT PENALTY: This is non-negotiable. If an essay is significantly under the 250-word limit (e.g., 150 words), you MUST penalize the Task Response score heavily, as the candidate cannot adequately develop the ideas."
-            "3. Leniency: If the word count is met and communication is clear/effective, favor the higher half-band in your final scoring."
+            "You are a senior, supportive IELTS Writing Examiner. Provide a human-centric evaluation. "
+            "SCORING LOGIC: "
+            "1. WORD COUNT: You will be provided with an official word count for each task. TRUST THIS NUMBER. "
+            "2. THE GRACE ZONE: If Task 1 is 140-149 words or Task 2 is 235-249 words, DO NOT penalize the score if the communication is clear and the task is fully developed. "
+            "3. PENALTIES: If Task 2 is significantly under 235 words (e.g., 150-190 words), you MUST penalize the 'Task Response' score heavily (Max 5.0), as the ideas cannot be sufficiently developed in that length. "
+            "4. SUPPORTIVE TONE: Be encouraging in your 'detailed_feedback' (English), but ensure 'explanation' and 'suggestions' are always in Bengali (বাংলা). "
             "Return ONLY a JSON object."
         )
 
@@ -35,7 +36,8 @@ class IELTSEvaluator:
         if task1_img_b64 and "," in task1_img_b64:
             task1_img_b64 = task1_img_b64.split(",")[1]
 
-        prompt = self._build_prompt(task1_text, task2_text)
+        # Pass the word counts into the prompt builder
+        prompt = self._build_prompt(task1_text, task1_word_count, task2_text, task2_word_count)
         payload = [prompt]
         if task1_img_b64:
             payload.append({"mime_type": "image/jpeg", "data": task1_img_b64})
@@ -57,50 +59,42 @@ class IELTSEvaluator:
                     return {"error": "API Failure", "details": str(e)}
                 time.sleep(wait)
 
-    def _build_prompt(self, t1, t2):
+    def _build_prompt(self, t1, t1_count, t2, t2_count):
         return f"""
-        Analyze these two IELTS tasks based on official criteria. 
+        OFFICIAL DATA FOR EVALUATION:
+            - Task 1 Word Count: {t1_count} (Goal: 150)
+            - Task 2 Word Count: {t2_count} (Goal: 250)
 
-        SCORING RULES (CRITICAL):
-        1. WORD COUNT PENALTY: You must strictly penalize "Task Achievement" (Task 1) and "Task Response" (Task 2) if word counts are below 150 and 250 respectively. 
-           - If Task 2 is ~150 words (100 words short), the Task Response score MUST NOT exceed 4.0 or 4.5, even if the grammar is perfect.
-        2. LENIENCY: Only favor the higher half-band if the minimum word count is met and communication is clear.
+            Analyze these two IELTS tasks based on official criteria.
 
-        LANGUAGE REQUIREMENTS:
-        - "explanation": MUST be written in Bengali (বাংলা). Explain the grammatical rule or logic behind the correction.
-        - "suggestions": MUST be written in Bengali (বাংলা). Provide actionable advice for improvement.
-        - "detailed_feedback": Should remain in English to maintain the professional tone of a Senior Examiner.
+            CRITICAL RULES:
+            1. WORD COUNT & GRACE ZONE: 
+               - If Task 2 is between 235-249 words, be lenient. 
+               - If Task 2 is < 230 words, penalize 'Task Response' based on how much development is missing.
+               - If Task 2 is < 200 words, 'Task Response' score cannot exceed 5.0.
+            2. LANGUAGE:
+               - 'explanation' MUST be in Bengali (বাংলা). Explain the logic of the fix clearly.
+               - 'suggestions' MUST be in Bengali (বাংলা). Provide actionable steps.
+               - 'detailed_feedback' MUST be in English.
 
-        TASK 1 TEXT: {t1}
-        TASK 2 TEXT: {t2}
+            TASK 1 TEXT: {t1}
+            TASK 2 TEXT: {t2}
 
-        Return ONLY a JSON object with this exact structure:
-        {{
-          "task1": {{
-            "band_score": float,
-            "criteria_scores": {{ "task_achievement": float, "coherence_cohesion": float, "lexical_resource": float, "grammatical_range": float }},
-            "detailed_feedback": "string",
-            "errors": [ 
-              {{ 
-                "original": "exact text from essay", 
-                "correction": "improved version", 
-                "explanation": "বাংলায় ব্যাখ্যা" 
-              }} 
-            ],
-            "suggestions": ["বাংলায় পরামর্শ ১", "বাংলায় পরামর্শ ২"]
-          }},
-          "task2": {{
-            "band_score": float,
-            "criteria_scores": {{ "task_response": float, "coherence_cohesion": float, "lexical_resource": float, "grammatical_range": float }},
-            "detailed_feedback": "string",
-            "errors": [ 
-              {{ 
-                "original": "exact text from essay", 
-                "correction": "improved version", 
-                "explanation": "বাংলায় ব্যাখ্যা" 
-              }} 
-            ],
-            "suggestions": ["বাংলায় পরামর্শ ১", "বাংলায় পরামর্শ ২"]
-          }}
-        }}
+            Return a JSON object with this exact structure:
+            {{
+              "task1": {{
+                "band_score": float,
+                "criteria_scores": {{ "task_achievement": float, "coherence_cohesion": float, "lexical_resource": float, "grammatical_range": float }},
+                "detailed_feedback": "string in English",
+                "errors": [ {{ "original": "...", "correction": "...", "explanation": "বাংলায় ব্যাখ্যা" }} ],
+                "suggestions": ["বাংলায় পরামর্শ"]
+              }},
+              "task2": {{
+                "band_score": float,
+                "criteria_scores": {{ "task_response": float, "coherence_cohesion": float, "lexical_resource": float, "grammatical_range": float }},
+                "detailed_feedback": "string in English",
+                "errors": [ {{ "original": "...", "correction": "...", "explanation": "বাংলায় ব্যাখ্যা" }} ],
+                "suggestions": ["বাংলায় পরামর্শ"]
+              }}
+            }}
         """
