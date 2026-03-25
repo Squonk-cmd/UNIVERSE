@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware  # <-- Import this
 from pydantic import BaseModel
 from typing import Optional
+import re  # <--- ADD THIS LINE HERE
 from app.models.ielts_evaluator import IELTSEvaluator
 
 app = FastAPI()
