@@ -31,7 +31,7 @@ class IELTSEvaluator:
     ]
         )
 
-    def evaluate_with_retry(self, task1_text, task1_img_b64, task2_text, retries=3):
+    def evaluate_with_retry(self, task1_text, task1_img_b64, task1_word_count, task2_text, task2_word_count, retries=3):
         # Clean Base64 string if it contains the header
         if task1_img_b64 and "," in task1_img_b64:
             task1_img_b64 = task1_img_b64.split(",")[1]
