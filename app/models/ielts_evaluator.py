@@ -31,7 +31,7 @@ class IELTSEvaluator:
     ]
         )
 
-    def evaluate_with_retry(self, task1_text, task1_img_b64, task1_word_count, task2_text, task2_word_count, retries=2):
+    def evaluate_with_retry(self, task1_text, task1_img_b64, task1_word_count, task2_text, task2_word_count, retries=1):
         # Clean Base64 string if it contains the header
         if task1_img_b64 and "," in task1_img_b64:
             task1_img_b64 = task1_img_b64.split(",")[1]
@@ -44,7 +44,7 @@ class IELTSEvaluator:
 
         for attempt in range(retries):
             try:
-                response = self.model.generate_content(payload)
+                response = self.model.generate_content(payload, request_options={"timeout": 60})
                 if not response.text:
                     raise ValueError("Empty response")
                 
