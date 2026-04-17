@@ -44,8 +44,22 @@ async def root():
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+
+_last_request_time = 0
+_MIN_INTERVAL_SECONDS = 15  # enforce max ~4 requests/minute safely
 @app.post("/analyze")
 async def analyze_full_test(request: FullTestRequest):
+    global _last_request_time
+    now = time.time()
+    elapsed = now - _last_request_time
+    if elapsed < _MIN_INTERVAL_SECONDS:
+        wait = round(_MIN_INTERVAL_SECONDS - elapsed)
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit: please wait {wait} more seconds before evaluating again."
+        )
+    _last_request_time = now
     try:
         # 1. Calculate word counts manually
         t1_count = get_clean_word_count(request.task1_text)
